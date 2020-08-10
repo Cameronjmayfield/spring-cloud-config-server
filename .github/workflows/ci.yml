@@ -30,9 +30,9 @@ jobs:
       - name: Build docker image
         run: |
           docker build -t $IMAGE_NAME .
+          docker tag $IMAGE_NAME ${{ github.repository }}
       - name: Test with remote git repo
         run: |
-          docker tag $IMAGE_NAME ${{ github.repository }}
           docker-compose -f examples/git/docker-compose.yml up -d
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/foo/development; do printf '.' && sleep 1; done"
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/foo/development; do printf '.' && sleep 1; done"
@@ -40,6 +40,7 @@ jobs:
           curl localhost:8881/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
           curl localhost:8882/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
           curl localhost:8883/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
+          docker-compose -f examples/git/docker-compose.yml down
       - name: Test with native file repo
         run: |
           docker-compose -f examples/native/docker-compose.yml up -d
@@ -49,3 +50,4 @@ jobs:
           curl localhost:8881/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
           curl localhost:8882/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
           curl localhost:8883/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
+          docker-compose -f examples/native/docker-compose.yml down
