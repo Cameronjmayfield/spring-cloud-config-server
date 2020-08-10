@@ -1,19 +1,42 @@
 version: '3.8'
 
-# Docker Compose example for testing Redis
+# Docker Compose example for testing a redis backed repo
 
 services:
-  config-server:
+  # Configured through environment variables
+  config-server-env:
     depends_on:
       - redis
-    container_name: config-server
+    container_name: config-server-env
     image: hyness/spring-cloud-config-server
     ports:
-      - "8888:8888"
+      - "8881:8888"
     environment:
-      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
-      - SPRING_PROFILES_ACTIVE=redis
-      - SPRING_REDIS_HOST=redis
+      SPRING_PROFILES_ACTIVE: redis
+      SPRING_REDIS_HOST: redis
+
+  # Configured through mount config volume
+  config-server-dir:
+    depends_on:
+      - redis
+    container_name: config-server-dir
+    image: hyness/spring-cloud-config-server
+    ports:
+      - "8882:8888"
+    volumes:
+      - ./config:/config
+
+  # Configured through system properties
+  config-server-props:
+    depends_on:
+      - redis
+    container_name: config-server-props
+    image: hyness/spring-cloud-config-server
+    ports:
+      - "8883:8888"
+    environment:
+      JAVA_OPTS: -Dspring.profiles.active=redis -Dspring.redis.host=redis
+
   redis:
     container_name: redis
     image: redis
