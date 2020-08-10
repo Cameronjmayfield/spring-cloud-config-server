@@ -20,7 +20,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: Build docker image
-      run: docker build -f $IMAGE_NAME .
+      run: docker build -t $IMAGE_NAME .
 #    - name: Log into registry
 #      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
     - name: Test with remote git repo
