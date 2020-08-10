@@ -4,7 +4,8 @@ on:
   push:
 
 env:
-  IMAGE_NAME: hyness/spring-cloud-config-server
+  IMAGE_NAME: test
+  IMAGE_ID: docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
 
 jobs:
   gradle-build:
@@ -25,8 +26,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - name: Build docker image
-        run: docker build -t $IMAGE_NAME .
+        run: docker build -t $IMAGE_ID .
 
   verify-docker:
     runs-on: ubuntu-latest
@@ -35,6 +38,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test with remote git repo
         run: |
+          docker tag $IMAGE_ID hyness/spring-cloud-config-server
           docker-compose -f examples/git/docker-compose.yml up -d
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/foo/development; do printf '.' && sleep 1; done"
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/foo/development; do printf '.' && sleep 1; done"
