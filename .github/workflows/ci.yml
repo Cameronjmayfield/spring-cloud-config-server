@@ -62,3 +62,14 @@ jobs:
           curl localhost:8882/redis-app/development | jq '.propertySources[0].source' | jq 'contains({"server.port": "8100"})'
           curl localhost:8883/redis-app/development | jq '.propertySources[0].source' | jq 'contains({"server.port": "8100"})'
           docker-compose -f examples/redis/docker-compose.yml down
+      - name: Test with vault repo
+        run: |
+          docker-compose -f examples/vault/docker-compose.yml up -d
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/myapp/default; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/myapp/default; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8883/myapp/default; do printf '.' && sleep 1; done"
+          docker-compose -f examples/vault/docker-compose.yml exec -T vault sh populate-vault.sh
+          curl localhost:8881/myapp/default | jq '.propertySources[0].source' | jq 'contains({"foo": "myappsbar"})'
+          curl localhost:8882/myapp/default | jq '.propertySources[0].source' | jq 'contains({"foo": "myappsbar"})'
+          curl localhost:8883/myapp/default | jq '.propertySources[0].source' | jq 'contains({"foo": "myappsbar"})'
+          docker-compose -f examples/vault/docker-compose.yml down
