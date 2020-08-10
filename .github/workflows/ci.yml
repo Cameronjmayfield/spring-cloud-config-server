@@ -4,8 +4,7 @@ on:
   push:
 
 env:
-  IMAGE_NAME: test
-  IMAGE_ID: docker.pkg.github.com/${{ github.repository }}/${{ IMAGE_NAME }}
+  IMAGE_ID: docker.pkg.github.com/${{ github.repository }}/test
 
 jobs:
   gradle-build:
