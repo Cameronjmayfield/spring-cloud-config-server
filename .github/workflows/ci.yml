@@ -4,7 +4,7 @@ on:
   push:
 
 env:
-  IMAGE_ID: docker.pkg.github.com/${{ github.repository }}/test
+  IMAGE_NAME: test
 
 jobs:
   gradle-build:
@@ -28,17 +28,11 @@ jobs:
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - name: Build docker image
-        run: docker build -t $IMAGE_ID .
-
-  verify-docker:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
+        run: |
+          docker build -t $IMAGE_NAME .
+          docker tag $IMAGE_NAME ${{ github.repository }}
       - name: Test with remote git repo
         run: |
-          docker pull $IMAGE_ID
-          docker tag $IMAGE_ID hyness/spring-cloud-config-server
           docker-compose -f examples/git/docker-compose.yml up -d
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/foo/development; do printf '.' && sleep 1; done"
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/foo/development; do printf '.' && sleep 1; done"
@@ -46,3 +40,12 @@ jobs:
           curl localhost:8881/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
           curl localhost:8882/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
           curl localhost:8883/foo/development | jq '.propertySources[0]' | jq 'contains({name: "https://github.com/spring-cloud-samples/config-repo/foo-development.properties"})'
+      - name: Test with native file repo
+        run: |
+          docker-compose -f examples/native/docker-compose.yml up -d
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/foo/development; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/foo/development; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8883/foo/development; do printf '.' && sleep 1; done"
+          curl localhost:8881/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
+          curl localhost:8882/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
+          curl localhost:8883/foo/development | jq '.propertySources[0]' | jq 'contains({name: "file:config/foo-development.properties"})'
