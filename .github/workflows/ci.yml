@@ -38,6 +38,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test with remote git repo
         run: |
+          docker pull $IMAGE_ID
           docker tag $IMAGE_ID hyness/spring-cloud-config-server
           docker-compose -f examples/git/docker-compose.yml up -d
           timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/foo/development; do printf '.' && sleep 1; done"
