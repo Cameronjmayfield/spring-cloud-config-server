@@ -73,3 +73,14 @@ jobs:
           curl localhost:8882/myapp/default | jq '.propertySources[0].source' | jq 'contains({"foo": "myappsbar"})'
           curl localhost:8883/myapp/default | jq '.propertySources[0].source' | jq 'contains({"foo": "myappsbar"})'
           docker-compose -f examples/vault/docker-compose.yml down
+      - name: Test with jdbc repo
+        run: |
+          docker-compose -f examples/jdbc/postgres/docker-compose.yml up -d
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8881/jdbc-app/dev/latest; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8882/jdbc-app/dev/latest; do printf '.' && sleep 1; done"
+          timeout 30 sh -c "until curl -o /dev/null -Isf localhost:8883/jdbc-app/dev/latest; do printf '.' && sleep 1; done"
+          docker-compose -f examples/jdbc/postgres/docker-compose.yml exec -T vault sh populate-vault.sh
+          curl localhost:8881/jdbc-app/dev/latest | jq '.propertySources[0].source' | jq 'contains({"sample key": "a value"})'
+          curl localhost:8882/jdbc-app/dev/latest | jq '.propertySources[0].source' | jq 'contains({"sample key": "a value"})'
+          curl localhost:8883/jdbc-app/dev/latest | jq '.propertySources[0].source' | jq 'contains({"sample key": "a value"})'
+          docker-compose -f examples/jdbc/postgres/docker-compose.yml down
