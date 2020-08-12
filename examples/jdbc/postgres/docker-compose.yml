@@ -34,7 +34,6 @@ services:
       - "8883:8888"
     environment:
       JAVA_OPTS: |
-        -Dspring.profiles.active=jdbc
         -Dspring.datasource.url=jdbc:postgresql://postgres:5432/cloud_config
         -Dspring.datasource.username=root
         -Dspring.datasource.password=password
@@ -50,4 +49,3 @@ services:
       POSTGRES_DB: cloud_config
     volumes:
       - .:/docker-entrypoint-initdb.d
-      - ./init-db.sql:/init-db.sql
